@@ -16,7 +16,6 @@ createServer((req, res) => {
     },
   }).then(
     async (r) => {
-      console.log(r);
       res.end(await r.text());
     },
     (e) => {
