@@ -12,11 +12,11 @@ createServer((req, res) => {
   fetch(backendUrl + req.url!).then(
     async (r) => {
       console.log(r);
-      res.end(await r.json());
+      res.end(await r.text());
     },
     (e) => {
       console.log(e);
       res.end();
     },
   );
-}).listen(8000);
+}).listen(process.env["PORT"] ?? 8000);
