@@ -7,8 +7,8 @@ createServer((req, res) => {
     res.end();
     return;
   }
+
   console.log(req.url);
-  res.setHeader("content-type", "application/json");
   fetch(backendUrl + req.url!, {
     headers: {
       accept: "application/json",
@@ -16,10 +16,12 @@ createServer((req, res) => {
     },
   }).then(
     async (r) => {
+      res.writeHead(r.status, [...r.headers]);
       res.end(await r.text());
     },
     (e) => {
       console.log(e);
+      res.writeHead(500);
       res.end();
     },
   );
