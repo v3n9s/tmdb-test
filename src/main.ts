@@ -9,7 +9,12 @@ createServer((req, res) => {
   }
   console.log(req.url);
   res.setHeader("content-type", "application/json");
-  fetch(backendUrl + req.url!).then(
+  fetch(backendUrl + req.url!, {
+    headers: {
+      accept: "application/json",
+      authorization: "Bearer " + process.env["API_TOKEN"]!,
+    },
+  }).then(
     async (r) => {
       console.log(r);
       res.end(await r.text());
