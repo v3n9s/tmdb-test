@@ -18,6 +18,7 @@ createServer((req, res) => {
 
   const searchParamsObject = Object.fromEntries(url.searchParams);
   const targetUrl = matchedRoute.handler({
+    req,
     pathname: url.pathname,
     searchParamsObject,
   });
