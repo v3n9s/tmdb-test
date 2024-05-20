@@ -1,7 +1,5 @@
 import { createServer } from "http";
 
-const backendUrl = "https://api.themoviedb.org";
-
 createServer((req, res) => {
   if (req.url === "/favicon.ico") {
     res.end();
@@ -9,7 +7,17 @@ createServer((req, res) => {
   }
 
   console.log(req.url);
-  fetch(backendUrl + req.url!, {
+
+  const targetUrl = new URL(
+    req.url as string,
+    "http://" +
+      req.headers.host!.replace(
+        new RegExp(`${process.env["HOST"]!}$`),
+        process.env["TARGET_HOST"]!,
+      ),
+  );
+
+  fetch(targetUrl, {
     headers: {
       accept: "application/json",
       authorization: "Bearer " + process.env["API_TOKEN"]!,
