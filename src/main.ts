@@ -1,12 +1,15 @@
 import { createServer } from "http";
 
+console.log(process.env["HOST"]);
+console.log(process.env["TARGET_HOST"]);
+
 createServer((req, res) => {
   if (req.url === "/favicon.ico") {
     res.end();
     return;
   }
 
-  console.log(req.url);
+  console.log(req.headers.host, req.url);
 
   const targetUrl = new URL(
     req.url as string,
@@ -16,6 +19,8 @@ createServer((req, res) => {
         process.env["TARGET_HOST"]!,
       ),
   );
+
+  console.log(targetUrl.href);
 
   fetch(targetUrl, {
     headers: {
