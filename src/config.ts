@@ -2,11 +2,11 @@ import { ZodError, z } from "zod";
 
 const configSchema = z
   .object({
-    HOST: z.string(),
-    API_BASE_URL: z.string(),
-    IMAGES_BASE_URL: z.string(),
-    API_TOKEN: z.string(),
     PORT: z.coerce.number(),
+    HOST: z.string(),
+    API_HOST: z.string(),
+    IMAGES_HOST: z.string(),
+    API_TOKEN: z.string(),
   })
   .readonly();
 

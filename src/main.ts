@@ -17,15 +17,14 @@ createServer((req, res) => {
   }
 
   const searchParamsObject = Object.fromEntries(url.searchParams);
-  if (!matchedRoute.validate({ pathname: url.pathname, searchParamsObject })) {
+  const targetUrl = matchedRoute.handler({
+    pathname: url.pathname,
+    searchParamsObject,
+  });
+  if (!targetUrl) {
     res.writeHead(400).end();
     return;
   }
-
-  const targetUrl = new URL(
-    req.url as string,
-    matchedRoute.baseUrl ?? config.API_BASE_URL,
-  );
 
   const proxiedRequest = request(
     targetUrl,
@@ -33,12 +32,12 @@ createServer((req, res) => {
       method: requestMethod,
       headers: { authorization: "Bearer " + config.API_TOKEN },
     },
-    (proxidResponse) => {
+    (proxiedResponse) => {
       res.writeHead(
-        proxidResponse.statusCode as number,
-        proxidResponse.headers,
+        proxiedResponse.statusCode as number,
+        proxiedResponse.headers,
       );
-      proxidResponse.pipe(res);
+      proxiedResponse.pipe(res);
     },
   );
 

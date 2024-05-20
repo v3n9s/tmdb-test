@@ -3,11 +3,10 @@ import { config } from "./config.js";
 
 type Validator = {
   matcher: (arg: { method: string; pathname: string }) => boolean;
-  validate: (arg: {
+  handler: (arg: {
     pathname: string;
     searchParamsObject: { [k: string]: string };
-  }) => boolean;
-  baseUrl?: string;
+  }) => URL | undefined;
 };
 
 export const routes: Validator[] = [
@@ -15,7 +14,7 @@ export const routes: Validator[] = [
     matcher: ({ method, pathname }) => {
       return method === "GET" && pathname === "/api/3/discover/movie";
     },
-    validate: ({ searchParamsObject }) => {
+    handler: ({ pathname, searchParamsObject }) => {
       const searchParamsSchema = z
         .object({
           language: z.string().optional(),
@@ -28,21 +27,25 @@ export const routes: Validator[] = [
         })
         .strict();
 
-      return searchParamsSchema.safeParse(searchParamsObject).success;
+      if (searchParamsSchema.safeParse(searchParamsObject).success) {
+        return new URL(pathname.slice(4), "http://" + config.API_HOST);
+      }
     },
   },
   {
     matcher: ({ method, pathname }) => {
       return method === "GET" && pathname === "/api/3/genre/movie/list";
     },
-    validate: ({ searchParamsObject }) => {
+    handler: ({ pathname, searchParamsObject }) => {
       const searchParamsSchema = z
         .object({
           language: z.string().optional(),
         })
         .strict();
 
-      return searchParamsSchema.safeParse(searchParamsObject).success;
+      if (searchParamsSchema.safeParse(searchParamsObject).success) {
+        return new URL(pathname.slice(4), "http://" + config.API_HOST);
+      }
     },
   },
   (() => {
@@ -51,7 +54,7 @@ export const routes: Validator[] = [
       matcher: ({ method, pathname }) => {
         return method === "GET" && pathname.startsWith(staticPathPart);
       },
-      validate: ({ pathname, searchParamsObject }) => {
+      handler: ({ pathname, searchParamsObject }) => {
         const pathSchema = z.coerce.number();
         const pathArg = pathname.slice(staticPathPart.length);
         const searchParamsSchema = z
@@ -61,10 +64,12 @@ export const routes: Validator[] = [
           })
           .strict();
 
-        return (
+        if (
           pathSchema.safeParse(pathArg).success &&
           searchParamsSchema.safeParse(searchParamsObject).success
-        );
+        ) {
+          return new URL(pathname.slice(4), "http://" + config.API_HOST);
+        }
       },
     };
   })(),
@@ -74,17 +79,19 @@ export const routes: Validator[] = [
       matcher: ({ method, pathname }) => {
         return method === "GET" && pathname.startsWith(staticPathPart);
       },
-      validate: ({ pathname }) => {
+      handler: ({ pathname }) => {
         const pathSchema = z.tuple([
           z.string(),
           z.union([z.string().endsWith(".png"), z.string().endsWith(".svg")]),
         ]);
 
-        return pathSchema.safeParse(
-          pathname.slice(staticPathPart.length).split("/"),
-        ).success;
+        if (
+          pathSchema.safeParse(pathname.slice(staticPathPart.length).split("/"))
+            .success
+        ) {
+          return new URL(pathname.slice(7), "http://" + config.IMAGES_HOST);
+        }
       },
-      baseUrl: config.IMAGES_BASE_URL,
     };
   })(),
 ];
