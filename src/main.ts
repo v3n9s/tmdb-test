@@ -1,41 +1,46 @@
-import { createServer } from "http";
-
-console.log(process.env["HOST"]);
-console.log(process.env["TARGET_HOST"]);
+import { createServer, request } from "http";
+import { config } from "./config.js";
+import { routes } from "./routes.js";
 
 createServer((req, res) => {
-  if (req.url === "/favicon.ico") {
-    res.end();
+  const requestMethod = req.method as string;
+  const host = req.headers.host ?? config.HOST;
+  const url = new URL(req.url as string, "http://" + host);
+
+  const matchedRoute = routes.find((route) =>
+    route.matcher({ method: requestMethod, pathname: url.pathname }),
+  );
+
+  if (!matchedRoute) {
+    res.writeHead(404).end();
     return;
   }
 
-  console.log(req.headers.host, req.url);
+  const searchParamsObject = Object.fromEntries(url.searchParams);
+  if (!matchedRoute.validate({ pathname: url.pathname, searchParamsObject })) {
+    res.writeHead(400).end();
+    return;
+  }
 
   const targetUrl = new URL(
     req.url as string,
-    "http://" +
-      req.headers.host!.replace(
-        new RegExp(`${process.env["HOST"]!}$`),
-        process.env["TARGET_HOST"]!,
-      ),
+    matchedRoute.baseUrl ?? config.API_BASE_URL,
   );
 
-  console.log(targetUrl.href);
-
-  fetch(targetUrl, {
-    headers: {
-      accept: "application/json",
-      authorization: "Bearer " + process.env["API_TOKEN"]!,
+  const proxiedRequest = request(
+    targetUrl,
+    {
+      method: requestMethod,
+      headers: { authorization: "Bearer " + config.API_TOKEN },
     },
-  }).then(
-    async (r) => {
-      res.writeHead(r.status, [...r.headers]);
-      res.end(await r.text());
-    },
-    (e) => {
-      console.log(e);
-      res.writeHead(500);
-      res.end();
+    (proxidResponse) => {
+      res.writeHead(
+        proxidResponse.statusCode as number,
+        proxidResponse.headers,
+      );
+      proxidResponse.pipe(res);
     },
   );
-}).listen(process.env["PORT"] ?? 8000);
+
+  req.pipe(proxiedRequest);
+}).listen(config.PORT);
