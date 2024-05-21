@@ -86,22 +86,21 @@ export const routes: Validator[] = [
   })(),
   (() => {
     const staticPathPart = "/image/t/p/";
+    const pathSchema = z.tuple([
+      z.string(),
+      z.string().regex(new RegExp(".(jpg|png|svg)$")),
+    ]);
     return {
       matcher: ({ method, pathname }) => {
         return method === "GET" && pathname.startsWith(staticPathPart);
       },
       handler: ({ req, pathname }) => {
-        const pathSchema = z.tuple([
-          z.string(),
-          z.union([z.string().endsWith(".png"), z.string().endsWith(".svg")]),
-        ]);
-
         if (
           pathSchema.safeParse(pathname.slice(staticPathPart.length).split("/"))
             .success
         ) {
           return new URL(
-            (req.url as string).slice(6),
+            (req.url as string).slice(7),
             "http://" + config.IMAGES_HOST,
           );
         }
