@@ -7,6 +7,8 @@ createServer((req, res) => {
   const host = req.headers.host ?? config.HOST;
   const url = new URL(req.url as string, "http://" + host);
 
+  res.setHeader("access-control-allow-origin", "*");
+
   const matchedRoute = routes.find((route) =>
     route.matcher({ method: requestMethod, pathname: url.pathname }),
   );
